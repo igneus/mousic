@@ -19,11 +19,11 @@ def naive(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2,
         # print '%s %i' % (code, event.value)
 
         if code == 'REL_X':
-            channel = 4
+            channel = channel_x
         elif code == 'REL_Y':
-            channel = 8
+            channel = channel_y
         elif code == 'REL_WHEEL':
-            channel = 11
+            channel = channel_wheel
         else:
             raise RuntimeError('unexpected code %s' % code)
 
