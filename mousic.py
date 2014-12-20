@@ -21,7 +21,7 @@ def main():
     else:
         midiout.open_virtual_port("mousic virtual output")
 
-    for msg in players.naive(mouse_dev, MIDDLE_C, 0.05):
+    for msg in players.forgetting(mouse_dev, MIDDLE_C, 0.05):
         midiout.send_message(msg)
 
     del midiout
