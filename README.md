@@ -4,7 +4,7 @@ Experimenting with translation of low-level mouse events to MIDI events.
 
 Intended for use on a headless Raspberry Pi working as a "music instrument".
 
-# how to run
+## how to run
 
 1. install requirements
 
@@ -18,6 +18,6 @@ Intended for use on a headless Raspberry Pi working as a "music instrument".
 
 5. enjoy the noise on every mouse movement
 
-# license
+## license
 
 GNU/GPL v. 3 or later
