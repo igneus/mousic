@@ -6,16 +6,14 @@ import evdev
 import time
 
 import midiutils
+import filters
 
 def naive(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
     """
     translates each and every mouse event to a MIDI event
     """
 
-    for event in mouse_dev.read_loop():
-        if event.type != evdev.ecodes.EV_REL:
-            continue
-
+    for event in filters.rel_only(mouse_dev.read_loop()):
         code = evdev.ecodes.REL[event.code]
         # print '%s %i' % (code, event.value)
 
@@ -43,13 +41,10 @@ def forgetting(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel
     while True:
         try:
             events = mouse_dev.read()
-            event = events.next()
+            event = filters.rel_only(events).next()
         except IOError as e:
             # resource unavailable
             time.sleep(sleep_interval)
-            continue
-
-        if event.type != evdev.ecodes.EV_REL:
             continue
 
         code = evdev.ecodes.REL[event.code]
@@ -80,10 +75,7 @@ def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, chan
         try:
             events = mouse_dev.read()
 
-            for event in events:
-                if event.type != evdev.ecodes.EV_REL:
-                    continue
-
+            for event in filters.rel_only(events):
                 code = evdev.ecodes.REL[event.code]
                 # 'REL_X' -> 'x'
                 add_to = code.split('_')[1].lower()
@@ -124,10 +116,7 @@ def xdynamic_ypitch(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=3, ch
     note = base_note
     channel = channel_x
 
-    for event in mouse_dev.read_loop():
-        if event.type != evdev.ecodes.EV_REL:
-            continue
-
+    for event in filters.rel_only(mouse_dev.read_loop()):
         code = evdev.ecodes.REL[event.code]
 
         if code in ('REL_Y', 'REL_WHEEL'):
