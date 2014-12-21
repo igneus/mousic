@@ -24,7 +24,7 @@ def main():
         midiout.open_virtual_port("mousic virtual output")
 
     try:
-        for msg in players.concatenating(mouse_dev, MIDDLE_C, 0.05, 0, 6, 8):
+        for msg in players.xdynamic_ypitch(mouse_dev, MIDDLE_C, 0.05):
 
             try:
                 midiout.send_message(msg)
