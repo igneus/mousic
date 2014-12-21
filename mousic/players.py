@@ -3,23 +3,9 @@
 # generators interpreting mouse input as midi events
 
 import evdev
-import rtmidi.midiconstants
 import time
 
-MIDI_NOTE_MIN = 21
-MIDI_NOTE_MAX = 107
-
-def normalize_midi_note_value(value, _min=MIDI_NOTE_MIN, _max=MIDI_NOTE_MAX):
-    """
-    returns value or the nearest valied MIDI note value
-    """
-
-    if value < _min:
-        return _min
-    elif value > _max:
-        return _max
-
-    return value
+import midiutils
 
 def naive(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
     """
@@ -43,12 +29,10 @@ def naive(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2,
             raise RuntimeError('unexpected code %s' % code)
 
         note = base_note + event.value # value may be negative
-        note_on = [channel | rtmidi.midiconstants.NOTE_ON, note, 112]
-        note_off = [channel | rtmidi.midiconstants.NOTE_OFF, note, 0]
 
-        yield note_on
+        yield midiutils.note_on(channel, note)
         time.sleep(sleep_interval)
-        yield note_off
+        yield midiutils.note_off(channel, note)
 
 def forgetting(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
     """
@@ -80,12 +64,10 @@ def forgetting(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel
             raise RuntimeError('unexpected code %s' % code)
 
         note = base_note + event.value # value may be negative
-        note_on = [channel | rtmidi.midiconstants.NOTE_ON, note, 112]
-        note_off = [channel | rtmidi.midiconstants.NOTE_OFF, note, 0]
 
-        yield note_on
+        yield midiutils.note_on(channel, note)
         time.sleep(sleep_interval)
-        yield note_off
+        yield midiutils.note_off(channel, note)
 
 def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
     """
@@ -123,14 +105,11 @@ def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, chan
                 continue
 
             note = base_note + buff[axis] # value may be negative
-            note = normalize_midi_note_value(note)
+            note = midiutils.normalize_note_value(note)
 
-            note_on = [channel | rtmidi.midiconstants.NOTE_ON, note, 112]
-            note_off = [channel | rtmidi.midiconstants.NOTE_OFF, note, 0]
-
-            yield note_on
+            yield midiutils.note_on(channel, note)
             time.sleep(sleep_interval)
-            yield note_off
+            yield midiutils.note_off(channel, note)
 
 def xdynamic_ypitch(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=3, channel_y=2, channel_wheel=3):
     """
@@ -152,14 +131,11 @@ def xdynamic_ypitch(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=3, ch
         code = evdev.ecodes.REL[event.code]
 
         if code in ('REL_Y', 'REL_WHEEL'):
-            note = normalize_midi_note_value(note + event.value / 5.0)
+            note = midiutils.normalize_note_value(note + event.value / 5.0)
 
         elif code == 'REL_X':
             dynamic = 80 + abs(event.value)
 
-            note_on = [channel | rtmidi.midiconstants.NOTE_ON, note, dynamic]
-            note_off = [channel | rtmidi.midiconstants.NOTE_OFF, note, 0]
-
-            yield note_on
+            yield midiutils.note_on(channel, note, dynamic)
             time.sleep(sleep_interval)
-            yield note_off
+            yield midiutils.note_off(channel, note)
