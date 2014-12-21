@@ -1,15 +1,14 @@
 #!/usr/bin/python
 
-# mousic
+# mousic_play.py
 
-# reads low-level mouse events,
-# produces MIDI events
+# mousic's commandline interface
 
 import sys
 import evdev
 import rtmidi
 
-import players
+import mousic.players as players
 
 MIDDLE_C = 60 # midi value of middle c
 
