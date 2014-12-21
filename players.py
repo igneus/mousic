@@ -132,3 +132,34 @@ def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, chan
             time.sleep(sleep_interval)
             yield note_off
 
+def xdynamic_ypitch(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=3, channel_y=2, channel_wheel=3):
+    """
+    keeps internally absolute pitch;
+    y movements change pitch,
+    x movements are translated to note events with dynamic corresponding
+    to the mouse event value.
+
+    channel_y and channel_wheel are not used.
+    """
+
+    note = base_note
+    channel = channel_x
+
+    for event in mouse_dev.read_loop():
+        if event.type != evdev.ecodes.EV_REL:
+            continue
+
+        code = evdev.ecodes.REL[event.code]
+
+        if code in ('REL_Y', 'REL_WHEEL'):
+            note = normalize_midi_note_value(note + event.value / 5.0)
+
+        elif code == 'REL_X':
+            dynamic = 80 + abs(event.value)
+
+            note_on = [channel | rtmidi.midiconstants.NOTE_ON, note, dynamic]
+            note_off = [channel | rtmidi.midiconstants.NOTE_OFF, note, 0]
+
+            yield note_on
+            time.sleep(sleep_interval)
+            yield note_off
