@@ -64,7 +64,7 @@ def forgetting(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel
         time.sleep(sleep_interval)
         yield midiutils.note_off(channel, note)
 
-def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
+def merging(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, channel_y=2, channel_wheel=3):
     """
     reads several events at once and concatenates them to 1-3 larger ones
     """
@@ -75,33 +75,26 @@ def concatenating(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=1, chan
         try:
             events = mouse_dev.read()
 
-            for event in filters.rel_only(events):
+            for event in filters.merge(filters.rel_only(events)):
                 code = evdev.ecodes.REL[event.code]
-                # 'REL_X' -> 'x'
-                add_to = code.split('_')[1].lower()
+                if code == 'REL_X':
+                    channel = channel_x
+                elif code == 'REL_Y':
+                    channel = channel_y
+                elif code == 'REL_WHEEL':
+                    channel = channel_wheel
+                else:
+                    raise RuntimeError('unexpected code %s' % code)
 
-                if add_to not in buff:
-                    buff[add_to] = 0
-                buff[add_to] += event.value
-        except IOError as e:
+                note = base_note + event.value # value may be negative
+
+                yield midiutils.note_on(channel, note)
+                time.sleep(sleep_interval)
+                yield midiutils.note_off(channel, note)
+        except IOError:
             # resource unavailable
             time.sleep(sleep_interval)
             continue
-
-        channels = (
-            ('x', channel_x),
-            ('y', channel_y),
-            ('wheel', channel_wheel))
-        for axis, channel in channels:
-            if axis not in buff:
-                continue
-
-            note = base_note + buff[axis] # value may be negative
-            note = midiutils.normalize_note_value(note)
-
-            yield midiutils.note_on(channel, note)
-            time.sleep(sleep_interval)
-            yield midiutils.note_off(channel, note)
 
 def xdynamic_ypitch(mouse_dev, base_note=60, sleep_interval=0.1, channel_x=3, channel_y=2, channel_wheel=3):
     """
