@@ -5,8 +5,10 @@
 # reads low-level mouse events,
 # produces MIDI events
 
+import sys
 import evdev
 import rtmidi
+
 import players
 
 MIDDLE_C = 60 # midi value of middle c
@@ -21,9 +23,16 @@ def main():
     else:
         midiout.open_virtual_port("mousic virtual output")
 
-    for msg in players.forgetting(mouse_dev, MIDDLE_C, 0.05):
-        midiout.send_message(msg)
+    try:
+        for msg in players.concatenating(mouse_dev, MIDDLE_C, 0.05, 0, 6, 8):
 
-    del midiout
+            try:
+                midiout.send_message(msg)
+            except OverflowError as e:
+                sys.stderr.write('%s: %s\n' % (e.message, str(msg)))
+
+    except KeyboardInterrupt:
+        # the program usually runs endlessly until killed
+        del midiout
 
 main()
