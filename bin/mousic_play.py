@@ -22,8 +22,12 @@ def main():
     else:
         midiout.open_virtual_port("mousic virtual output")
 
+    player = 'xdynamic_ypitch'
+    if len(sys.argv) >= 2:
+        player = sys.argv[1]
+
     try:
-        for msg in players.xdynamic_ypitch(mouse_dev, MIDDLE_C, 0.05):
+        for msg in getattr(players, player)(mouse_dev, MIDDLE_C, 0.05):
 
             try:
                 midiout.send_message(msg)
